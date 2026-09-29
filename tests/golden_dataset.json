@@ -1,0 +1,177 @@
+{
+  "description": "Golden evaluation dataset for Autonomous Payment Reconciliation & Session Enrollment Agent",
+  "version": "1.0.0",
+  "pass_threshold": 0.90,
+  "cases": [
+    {
+      "case_id": "case_01_direct_upi_match",
+      "description": "Direct UPI payment match for Level 1 session with matching applicant name",
+      "input": {
+        "form_entry_id": "ROW-101",
+        "applicant_name": "Aarav Sharma",
+        "applicant_email": "aarav.sharma@example.com",
+        "applicant_phone": "+919876543210",
+        "session_level": 1,
+        "receipt_image_base64": "402819283741"
+      },
+      "expected_output": {
+        "status": "ENROLLED",
+        "is_payment_verified": true,
+        "requires_hitl": false
+      }
+    },
+    {
+      "case_id": "case_02_family_upi_payer_hitl",
+      "description": "Payment made by uncle/family member with different name on UPI receipt",
+      "input": {
+        "form_entry_id": "ROW-102",
+        "applicant_name": "Rohit Kumar",
+        "applicant_email": "rohit.k@example.com",
+        "applicant_phone": "+919876543211",
+        "session_level": 2,
+        "receipt_image_base64": "409988776655"
+      },
+      "expected_output": {
+        "status": "AWAITING_HUMAN_APPROVAL",
+        "is_payment_verified": true,
+        "requires_hitl": true
+      }
+    },
+    {
+      "case_id": "case_03_paypal_usd_direct_match",
+      "description": "International PayPal payment for Level 3 session in USD",
+      "input": {
+        "form_entry_id": "ROW-103",
+        "applicant_name": "Elena Rostova",
+        "applicant_email": "elena.r@example.com",
+        "applicant_phone": "+14155552671",
+        "session_level": 3,
+        "receipt_image_base64": "PAYPAL-9876543210"
+      },
+      "expected_output": {
+        "status": "ENROLLED",
+        "is_payment_verified": true,
+        "requires_hitl": false
+      }
+    },
+    {
+      "case_id": "case_04_blurry_receipt_guided_recovery",
+      "description": "Uploaded screenshot is blurry and unreadable; agent returns recovery instructions",
+      "input": {
+        "form_entry_id": "ROW-104",
+        "applicant_name": "Priya Verma",
+        "applicant_email": "priya.v@example.com",
+        "applicant_phone": "+919876543212",
+        "session_level": 1,
+        "receipt_image_base64": "blurry_receipt_corrupted_screenshot_image"
+      },
+      "expected_output": {
+        "status": "FAILED",
+        "is_payment_verified": false,
+        "requires_recovery_instructions": true
+      }
+    },
+    {
+      "case_id": "case_05_duplicate_replay_attack",
+      "description": "Applicant attempts to reuse an already confirmed transaction UTR",
+      "input": {
+        "form_entry_id": "ROW-105",
+        "applicant_name": "Sneha Gupta",
+        "applicant_email": "sneha.g@example.com",
+        "applicant_phone": "+919876543213",
+        "session_level": 3,
+        "receipt_image_base64": "401122334455"
+      },
+      "expected_output": {
+        "status": "FAILED",
+        "is_payment_verified": false,
+        "requires_hitl": false
+      }
+    },
+    {
+      "case_id": "case_06_underpayment_discrepancy",
+      "description": "Applicant selects Level 3 (₹12,000) but paid Level 1 amount (₹4,000)",
+      "input": {
+        "form_entry_id": "ROW-106",
+        "applicant_name": "Vikram Patel",
+        "applicant_email": "vikram.p@example.com",
+        "applicant_phone": "+919876543214",
+        "session_level": 3,
+        "receipt_image_base64": "405566778899"
+      },
+      "expected_output": {
+        "status": "FAILED",
+        "is_payment_verified": false,
+        "requires_hitl": false
+      }
+    },
+    {
+      "case_id": "case_07_family_paypal_payer_hitl",
+      "description": "PayPal payment made by father for student applicant; triggers zero-dashboard HITL",
+      "input": {
+        "form_entry_id": "ROW-107",
+        "applicant_name": "Alice Smith",
+        "applicant_email": "alice.smith@university.edu",
+        "applicant_phone": "+14155559812",
+        "session_level": 2,
+        "receipt_image_base64": "PAYPAL-FRIEND-5544 family john"
+      },
+      "expected_output": {
+        "status": "AWAITING_HUMAN_APPROVAL",
+        "is_payment_verified": true,
+        "requires_hitl": true
+      }
+    },
+    {
+      "case_id": "case_08_overpayment_accepted",
+      "description": "Overpayment received for Level 2 (₹9000 paid vs ₹8000 required), enrolled with credit notice",
+      "input": {
+        "form_entry_id": "ROW-108",
+        "applicant_name": "Kavita Reddy",
+        "applicant_email": "kavita.r@example.com",
+        "applicant_phone": "+919876543215",
+        "session_level": 2,
+        "receipt_image_base64": "407788990011"
+      },
+      "expected_output": {
+        "status": "ENROLLED",
+        "is_payment_verified": true,
+        "requires_hitl": false
+      }
+    },
+    {
+      "case_id": "case_09_invalid_unrecognized_utr",
+      "description": "Screenshot missing 12-digit UTR; triggers guided recovery response",
+      "input": {
+        "form_entry_id": "ROW-109",
+        "applicant_name": "Deepa Nair",
+        "applicant_email": "deepa.n@example.com",
+        "applicant_phone": "+919876543216",
+        "session_level": 1,
+        "receipt_image_base64": "random_unformatted_receipt_text"
+      },
+      "expected_output": {
+        "status": "FAILED",
+        "is_payment_verified": false,
+        "requires_recovery_instructions": true
+      }
+    },
+    {
+      "case_id": "case_10_missing_applicant_details_triage_fail",
+      "description": "Form submission missing applicant name caught by triage agent",
+      "input": {
+        "form_entry_id": "ROW-110",
+        "applicant_name": "",
+        "applicant_email": "missing.name@example.com",
+        "applicant_phone": "+919876543217",
+        "session_level": 1,
+        "receipt_image_base64": "402819283741"
+      },
+      "expected_output": {
+        "status": "FAILED",
+        "is_payment_verified": false,
+        "requires_recovery_instructions": true
+      }
+    }
+  ]
+}

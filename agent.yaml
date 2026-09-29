@@ -1,0 +1,69 @@
+# Google Cloud Vertex AI Agent Engine / Gemini Enterprise Agent Specification
+schemaVersion: "agent/v1"
+displayName: "Autonomous-Payment-Reconciliation-Agent"
+description: "Autonomous payment reconciliation and session enrollment agent automating Google Form payment verification (UPI/PayPal) with 1-click zero-dashboard mobile HITL approval."
+
+runtime:
+  type: "adk"
+  entrypoint: "src.coordinator:ReconciliationCoordinator"
+  app_entrypoint: "src.main:app"
+  port: 8080
+
+models:
+  planning:
+    model: "gemini-2.5-pro"
+    temperature: 0.1
+    max_output_tokens: 4096
+    description: "Multi-agent coordinator reasoning, dispute analysis, and policy guardrail planning."
+  vision_extraction:
+    model: "gemini-2.5-flash"
+    temperature: 0.0
+    max_output_tokens: 1024
+    description: "High-speed multimodal OCR extraction and PII scrubbing for receipts."
+
+tools:
+  - name: "extract_transaction_details_from_receipt"
+    description: "Multimodal OCR tool extracting 12-digit UPI UTR or PayPal ID from receipt screenshots with guided error recovery."
+    module: "src.tools"
+    handler: "extract_transaction_details_from_receipt"
+    input_schema: "src.tools.ReceiptAnalysisInput"
+    output_schema: "src.tools.ReceiptAnalysisOutput"
+
+  - name: "verify_bank_statement_record"
+    description: "Cross-checks receipt transaction reference, amount, and payer identity against ledger records."
+    module: "src.tools"
+    handler: "verify_bank_statement_record"
+    input_schema: "src.tools.BankVerificationInput"
+    output_schema: "src.tools.BankVerificationOutput"
+
+  - name: "generate_hitl_approval_ticket"
+    description: "Generates cryptographically signed 1-click HMAC approval URLs for WhatsApp and Email notifications."
+    module: "src.tools"
+    handler: "generate_hitl_approval_ticket"
+    input_schema: "src.tools.HITLTicketInput"
+    output_schema: "src.tools.HITLTicketOutput"
+
+  - name: "dispatch_session_enrollment"
+    description: "Issues official calendar invite and enrollment confirmation email after verified payment."
+    module: "src.tools"
+    handler: "dispatch_session_enrollment"
+    input_schema: "src.tools.EnrollmentDispatchInput"
+    output_schema: "src.tools.EnrollmentDispatchOutput"
+
+memory:
+  type: "compacting_session_memory"
+  class: "src.memory:CompactingSessionMemory"
+  max_turns: 6
+  persistence_backend: "google.cloud.firestore"
+  async_persistence: true
+
+guardrails:
+  policy_hook: "src.guardrails:evaluate_dispatch_policy"
+  enforce_payment_verification: true
+  block_unverified_dispatch: true
+  human_in_the_loop_on_third_party: true
+
+observability:
+  structured_logging: "structlog"
+  distributed_tracing: "opentelemetry"
+  pii_scrubbing: true
